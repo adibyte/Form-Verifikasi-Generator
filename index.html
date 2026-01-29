@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Website Cetak Form Verifikasi Kesehatan</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-600: #475569;
+            --slate-700: #334155;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; margin: 0; padding: 20px; color: var(--slate-700); }
+        .no-print { max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        .header-ui { text-align: center; margin-bottom: 25px; border-bottom: 1px solid var(--slate-200); padding-bottom: 15px; }
+        .header-ui h1 { margin: 0; font-size: 22px; color: var(--primary-dark); }
+
+        .guide-box { text-align: center; margin-bottom: 10px; }
+        .guide-text { font-size: 13px; color: var(--slate-600); font-weight: 500; margin-bottom: 8px; display: block; }
+        .template-sub { font-size: 11px; color: #94a3b8; margin-top: 5px; font-style: italic; }
+
+        .grid-input { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+        
+        input, select { padding: 10px; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 13px; }
+
+        .upload-box { border: 2px dashed var(--slate-200); padding: 30px; text-align: center; cursor: pointer; border-radius: 10px; background: #fafafa; margin-bottom: 15px; }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; font-size: 13px; color: white; margin: 0 auto; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-gen { background: var(--primary); }
+        .btn-print { background: var(--success); }
+        .btn-template { background: var(--warning); }
+
+        /* PRINT & TEXT COLOR SETTINGS */
+        @media print {
+            @page { size: A4 landscape; margin: 8mm; }
+            body { background: white; padding: 0; }
+            .no-print { display: none; }
+            .preview-container { 
+                box-shadow: none !important; border: none !important; width: 100% !important; 
+                margin: 0 !important; page-break-after: always; color: #000 !important; 
+            }
+            .preview-container:last-child { page-break-after: auto; }
+            .data-table { width: 99.8% !important; border-right: 1px solid #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .data-table tr:nth-child(even) td { background-color: #f2f2f2 !important; }
+            .data-table td, .data-table th { color: #000 !important; border: 1px solid #000 !important; }
+        }
+
+        .preview-container { 
+            background: white; padding: 10px; margin: 0 auto 20px auto; width: 277mm; min-height: 185mm; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; box-sizing: border-box; 
+            color: #000; /* Memastikan teks preview juga hitam */
+        }
+        .form-header { text-align: center; margin-bottom: 10px; }
+        .form-header h2 { margin: 0; font-size: 16pt; }
+        .form-header h3 { margin: 2px 0; font-size: 12pt; font-weight: 500; }
+        .faskes-periode-info { margin: 5px auto; font-size: 10pt; font-weight: bold; border-top: 1px solid #000; padding-top: 3px; }
+        
+        .data-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; color: #000; }
+        .data-table th, .data-table td { border: 1px solid #000; padding: 4px 6px; }
+        .data-table th { background: #e5e7eb; }
+        .data-table tr:nth-child(even) td { background-color: #f2f2f2; }
+
+        .signature-section { margin-top: 20px; display: flex; justify-content: space-between; font-size: 8.5pt; page-break-inside: avoid; color: #000; }
+        .signature-box { width: 320px; }
+        .sig-title { margin-bottom: 15px; display: block; } 
+        .signature-space { height: 50px; }
+        .nip-text { margin-top: 8px; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="no-print">
+    <div class="header-ui">
+        <h1>Website Cetak Form Verifikasi Kesehatan KPM PKH</h1>
+    </div>
+
+    <div class="guide-box">
+        <span class="guide-text">Panduan : Silahkan Upload format Verifikasi Kesehatan berbasis excel pada web ini, dan jangan merubah nama kolom pada format excel dibawah ini</span>
+        <button class="btn btn-template" onclick="downloadTemplate()">📂 Unduh Template Excel</button>
+        <div class="template-sub">Contoh Format / Template File Excel</div>
+    </div>
+
+    <div class="grid-input" style="margin-top: 25px;">
+        <div class="input-group">
+            <label>NAMA PENDAMPING SOSIAL</label>
+            <input type="text" id="namaPendamping" placeholder="Masukkan Nama Lengkap...">
+        </div>
+        <div class="input-group">
+            <label>NIP / NIK PENDAMPING</label>
+            <input type="text" id="nipPendamping" placeholder="Masukkan NIP/ID...">
+        </div>
+    </div>
+
+    <div class="upload-box" id="dropZone">
+        <p id="fileName">Tarik file Excel ke sini atau klik untuk pilih file</p>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none">
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <button class="btn btn-gen" onclick="generateData()">⚙️ Generate Formulir</button>
+    </div>
+
+    <div id="controls" style="display:none; border-top: 1px solid #eee; padding-top: 20px;">
+        <div class="grid-input">
+            <div class="input-group">
+                <label>FILTER NAMA FASKES</label>
+                <select id="faskesSelect" onchange="updatePreview()"></select>
+            </div>
+            <div class="input-group" style="justify-content: flex-end; flex-direction: row; align-items: flex-end;">
+                <button class="btn btn-print" onclick="window.print()">🖨️ Cetak ke PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="printableArea"></div>
+
+<script>
+    let allData = [];
+    let fileLoaded = false;
+
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const faskesSelect = document.getElementById('faskesSelect');
+    const printableArea = document.getElementById('printableArea');
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => loadFileData(e.target.files[0]);
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.borderColor = '#2563eb'; };
+    dropZone.ondrop = (e) => { e.preventDefault(); loadFileData(e.dataTransfer.files[0]); };
+
+    function loadFileData(file) {
+        if (!file) return;
+        document.getElementById('fileName').innerHTML = "✅ Berhasil: <strong>" + file.name + "</strong>";
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            allData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            
+            // SORTING DATA BERDASARKAN RT (UTAMA) KEMUDIAN RW
+            allData.sort((a, b) => {
+                const rtA = parseInt(a['RT']) || 0;
+                const rtB = parseInt(b['RT']) || 0;
+                if (rtA !== rtB) return rtA - rtB;
+                
+                const rwA = parseInt(a['RW']) || 0;
+                const rwB = parseInt(b['RW']) || 0;
+                return rwA - rwB;
+            });
+
+            fileLoaded = true;
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function generateData() {
+        if (!fileLoaded || allData.length === 0) {
+            alert("Harap unggah file Excel sesuai template!");
+            return;
+        }
+        initFilters();
+        document.getElementById('controls').style.display = 'block';
+        updatePreview();
+    }
+
+    function initFilters() {
+        const faskesOptions = [...new Set(allData.map(item => item['NAMA FASKES']))].filter(Boolean);
+        faskesSelect.innerHTML = '<option value="ALL">Semua Faskes</option>';
+        faskesOptions.forEach(f => {
+            faskesSelect.innerHTML += `<option value="${f}">${f}</option>`;
+        });
+    }
+
+    function updatePreview() {
+        const selectedFaskes = faskesSelect.value;
+        const pName = document.getElementById('namaPendamping').value || "__________________________";
+        const pNip = document.getElementById('nipPendamping').value || "__________________________";
+        
+        document.title = "Formulir Verkes " + (selectedFaskes === "ALL" ? "Gabungan" : selectedFaskes);
+
+        const filteredData = selectedFaskes === "ALL" ? allData : allData.filter(d => d['NAMA FASKES'] === selectedFaskes);
+        
+        const groupedByFaskes = filteredData.reduce((acc, curr) => {
+            const f = curr['NAMA FASKES'] || 'TIDAK DIKETAHUI';
+            if (!acc[f]) acc[f] = [];
+            acc[f].push(curr);
+            return acc;
+        }, {});
+
+        printableArea.innerHTML = '';
+
+        Object.keys(groupedByFaskes).forEach((faskesName, idx) => {
+            const items = groupedByFaskes[faskesName];
+            const page = document.createElement('div');
+            page.className = 'preview-container';
+            
+            let tableRows = items.map((d, i) => `
+                <tr>
+                    <td align="center">${i + 1}</td>
+                    <td style="white-space: nowrap;">${d['Nama'] || '-'}</td>
+                    <td>${d['NIK'] || '-'}</td>
+                    <td>${d['NO. KK'] || '-'}</td>
+                    <td>${d['Komponen'] || '-'}</td>
+                    <td style="width:50px;"></td><td style="width:50px;"></td><td style="width:50px;"></td>
+                    <td>${d['Alamat'] || '-'}</td>
+                    <td align="center">${d['RT'] || '-'}</td>
+                    <td align="center">${d['RW'] || '-'}</td>
+                    <td>${d['DESA'] || '-'}</td>
+                    <td>${d['KECAMATAN'] || '-'}</td>
+                </tr>`).join('');
+
+            page.innerHTML = `
+                <div class="form-header">
+                    <h2>FORM VERIFIKASI KOMITMEN KESEHATAN</h2>
+                    <h3>PROGRAM KELUARGA HARAPAN (PKH)</h3>
+                    <div class="faskes-periode-info">
+                        NAMA FASKES: ${faskesName} &nbsp;|&nbsp; Periode: Oktober - Desember 2025
+                    </div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">No</th><th rowspan="2">Nama</th><th rowspan="2">NIK</th><th rowspan="2">No. KK</th><th rowspan="2">Komponen</th>
+                            <th colspan="3">Kehadiran</th><th rowspan="2">Alamat</th><th rowspan="2">RT</th><th rowspan="2">RW</th><th rowspan="2">Desa</th><th rowspan="2">Kecamatan</th>
+                        </tr>
+                        <tr>
+                            <th>Bulan ke 1</th><th>Bulan ke 2</th><th>Bulan ke 3</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <div class="signature-section">
+                    <div class="signature-box">
+                        <span class="sig-title">Mengetahui,</span>
+                        <strong>Pendamping Sosial PKH</strong>
+                        <div class="signature-space"></div>
+                        <p><strong>${pName}</strong><br><span class="nip-text">NIP. ${pNip}</span></p>
+                    </div>
+                    <div class="signature-box">
+                        <span class="sig-title">Jember, ..................................</span>
+                        <strong>Kepala / Verifikator ${faskesName}</strong>
+                        <div class="signature-space"></div>
+                        <p><strong>( __________________________ )</strong><br><span class="nip-text">NIP. </span></p>
+                    </div>
+                </div>
+            `;
+            printableArea.appendChild(page);
+        });
+    }
+
+    function downloadTemplate() {
+        const headers = [["No.", "Nama", "NIK", "NO. KK", "Komponen", "Alamat", "RT", "RW", "KECAMATAN", "DESA", "NAMA FASKES"]];
+        const ws = XLSX.utils.aoa_to_sheet(headers);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "VERKES");
+        XLSX.writeFile(wb, "Template_Verkes_PKH.xlsx");
+    }
+</script>
+</body>
+</html>
